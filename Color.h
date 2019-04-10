@@ -11,7 +11,7 @@ union RGB {
   };
 };
 
-#define BLACK  strip.Color(0,0,0)
+#define BLACK   (uint32_t) 0
 #define RED     (uint32_t) 0xFF0000
 #define GREEN   (uint32_t) 0x00FF00
 #define BLUE    (uint32_t) 0x0000FF
@@ -23,6 +23,6 @@ void setAll(Adafruit_NeoPixel* pStrip, uint32_t color) {
   auto count = pStrip->numPixels();
   for (int i = 0; i < count; i++) {
     pStrip->setPixelColor(i, color);
-  }
+  }  
   pStrip->show();
 }

@@ -14,16 +14,30 @@ class ExtrapolateAction : public Action
     int _deltaB;
     int _duration;
     unsigned long _start;
-    
+    bool _fromSpecified = false;
+
   public:
     ExtrapolateAction(uint32_t from, uint32_t to, int duration, Adafruit_NeoPixel* pStrip) : _duration(duration), _pStrip(pStrip)
     {
       _from.color = from;
       _to.color = to;
+      _fromSpecified = true;
+    }
+
+    ExtrapolateAction(uint32_t to, int duration, Adafruit_NeoPixel* pStrip) : _duration(duration), _pStrip(pStrip)
+    {
+      _to.color = to;
     }
 
     void Setup()
     {
+      if (!_fromSpecified)
+      {
+        _from.color = _pStrip->getPixelColor(0);
+        Serial.print("from ");
+        Serial.println(_from.color, HEX);
+      }
+      
       _start = millis();
       _deltaR = (int)_to.r - (int)_from.r;
       _deltaG = (int)_to.g - (int)_from.g;

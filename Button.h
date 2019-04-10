@@ -6,7 +6,7 @@ class Button : public PinIO
 {
   private:
     const int DELAY = 50;
-    int _previousValue = -1;
+    int _previousValue = 0;
     int _lastRead = 0;
     unsigned long _lastDebounceTime = 0;
   public:
