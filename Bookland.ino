@@ -27,7 +27,7 @@ void setup() {
   reader.SetWatchdog(&watchdog);
 
   strip.begin();
-  strip.setBrightness(32);
+  strip.setBrightness(16);
   strip.show();
 }
 
@@ -59,24 +59,34 @@ Action* pAction;
 
 void loop() {
 
-  pushButton.CheckState();
+  g_context.now = millis();
+  
+  pushButton.CheckState(g_context);
 
+  if (watchdog.IsTimeout(g_context))
+  {
+    setAll(&strip, BLACK);
+    actionIndex = -1;
+    actionFinished = false;
+    return;
+  }
+  
   if (actionIndex == -1 || actionFinished)
   {
     actionIndex = (actionIndex + 1) % (sizeof(actions) / sizeof(Action*));
     Serial.print("Action "); Serial.println(actionIndex);
     pAction = actions[actionIndex];
     actionFinished = false;
-    pAction->Setup();
+    pAction->Setup(g_context);
   }
 
   if (pAction)
   {
-    actionFinished = !pAction->Step();
+    actionFinished = !pAction->Step(g_context);
   }
 
   if (actionFinished)
   {
-    pAction->Teardown();
+    pAction->Teardown(g_context);
   }
 }

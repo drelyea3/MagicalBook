@@ -1,26 +1,29 @@
 #pragma once
 
+#include "context.h"
+
 class Watchdog
 {
   private:
     unsigned long _lastPoke = millis();
     unsigned long _timeout;
+    bool _autoReset;
   public:
-    Watchdog(unsigned long timeout) : _timeout(timeout)
+    Watchdog(unsigned long timeout, bool autoReset = false) : _timeout(timeout), _autoReset(autoReset)
     {
     }
 
-    void Pat()
+    void Pat(Context& context)
     {
-      _lastPoke = millis();
+      _lastPoke = context.now;
     }
 
-    bool IsTimeout()
+    bool IsTimeout(Context& context)
     {
-      auto result = millis() - _lastPoke > _timeout;
-      if (result)
+      auto result = context.now - _lastPoke > _timeout;
+      if (result & _autoReset)
       {
-        Pat();
+        Pat(context);
       }
       return result;
     }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "context.h"
 #include "watchdog.h"
 
 class PinIO
@@ -30,7 +31,7 @@ class PinIO
       return _value;
     }
 
-    bool CheckState()
+    bool CheckState(Context& context)
     {
       auto result = CheckStateCore();
       if (result)
@@ -45,7 +46,7 @@ class PinIO
 
         if (_pWatchdog)
         {
-          _pWatchdog->Pat();
+          _pWatchdog->Pat(context);
         }
       }
 

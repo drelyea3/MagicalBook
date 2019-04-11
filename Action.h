@@ -1,13 +1,14 @@
 #pragma once
 
 #include "Color.h"
+#include "context.h"
 
 class Action
 {
   public:
-    virtual void Setup() {};
-    virtual bool Step() = 0;
-    virtual void Teardown() {};
+    virtual void Setup(Context& context) {};
+    virtual bool Step(Context& context) = 0;
+    virtual void Teardown(Context& context) {};
 };
 
 #include "Button.h"
@@ -18,12 +19,12 @@ class TerminateAction : public Action
     Adafruit_NeoPixel* _pStrip;
   public:
     TerminateAction(Adafruit_NeoPixel* pStrip) : _pStrip(pStrip) {}
-    void Setup() 
+    void Setup(Context& context)
     {
       setAll(_pStrip, BLACK);
     }
     
-    bool Step() {
+    bool Step(Context& context) {
       return true;
     }
 };
@@ -37,11 +38,11 @@ class WaitAction : public Action
   public:
     WaitAction(int ms) : _delay(ms) {}
 
-    void Setup() {
-      _start = millis();
+    void Setup(Context& context) {
+      _start = context.now;
     }
-    bool Step() {
-      return millis() - _start < _delay;
+    bool Step(Context& context) {
+      return context.now - _start < _delay;
     }
 };
 
@@ -54,16 +55,16 @@ class WaitForButton : public Action
     {
     }
 
-    void Setup() {
+    void Setup(Context& context) {
       Serial.println("Waiting for button press");
     }
 
-    bool Step()
+    bool Step(Context& context)
     {
       return !_pButton->GetValue();
     }
 
-    void Teardown() {
+    void Teardown(Context& context) {
       Serial.println("Got button press");
     }
 };

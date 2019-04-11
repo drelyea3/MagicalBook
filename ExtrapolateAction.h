@@ -29,7 +29,7 @@ class ExtrapolateAction : public Action
       _to.color = to;
     }
 
-    void Setup()
+    void Setup(Context& context)
     {
       if (!_fromSpecified)
       {
@@ -38,15 +38,15 @@ class ExtrapolateAction : public Action
         Serial.println(_from.color, HEX);
       }
       
-      _start = millis();
+      _start = context.now;
       _deltaR = (int)_to.r - (int)_from.r;
       _deltaG = (int)_to.g - (int)_from.g;
       _deltaB = (int)_to.b - (int)_from.b;
     }
 
-    bool Step()
+    bool Step(Context& context)
     {
-      long elapsed = millis() - _start;
+      long elapsed = context.now - _start;
       if (elapsed >= _duration)
       {
         setAll(_pStrip, _to.color);
