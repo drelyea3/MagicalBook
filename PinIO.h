@@ -17,7 +17,7 @@ class PinIO
     int _value = -1;
     Watchdog* _pWatchdog = NULL;
 
-    virtual bool CheckStateCore() = 0;
+    virtual bool CheckStateCore(unsigned long now) = 0;
 
   public:
     PinIO(int pin) : _pin(pin)
@@ -34,7 +34,7 @@ class PinIO
 
     bool CheckState(Context& context)
     {
-      auto result = CheckStateCore();
+      auto result = CheckStateCore(context.now);
       if (result)
       {
         for (int index = 0; index < MAX_HANDLERS; ++index)

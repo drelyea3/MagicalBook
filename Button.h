@@ -21,9 +21,8 @@ class Button : public PinIO
     bool IsReleased() { return _isReleased; }
     bool GetUndebouncedValue() { return _lastRead; }
     
-    bool CheckStateCore()
+    bool CheckStateCore(unsigned long now)
     {
-      auto now = millis();
       bool currentRead = digitalRead(3) == 0;
 
       if (currentRead != _lastRead)

@@ -12,9 +12,10 @@ class AnalogReader : public PinIO
     int _tolerance;
     ExponentialFilter<long> _inputFilter = ExponentialFilter<long>(20, 0);
     bool _initialValueSet = false;
+    unsigned long _lastRead;
     
   protected:
-    bool CheckStateCore()
+    bool CheckStateCore(unsigned long now)
     {      
       int currentValue = analogRead(_pin);
       
@@ -26,6 +27,13 @@ class AnalogReader : public PinIO
       {
         _initialValueSet = true;
         _inputFilter.SetCurrent(currentValue);
+        _lastRead = now;
+      }
+      
+      auto delta = now - _lastRead;
+      if (delta < 1000)
+      {
+        delay(delta);
       }
       
       int filteredValue = _inputFilter.Current();

@@ -1,5 +1,5 @@
 #include <Adafruit_NeoPixel.h>
-
+#define TRACE 1
 #define WATCHDOG_TIMEOUT_SECONDS 20
 
 #define ACTIVATE_BUTTON_PIN 3
@@ -33,11 +33,13 @@ Action* actions[] = {
   new WaitAction(2000), // because pushbutton died
   new ExtrapolateAction(BLACK, RED, 1500, &strip),
   new ExtrapolateAction(BLACK, GREEN, 1500, &strip),
-  new ExtrapolateAction(BLACK, BLUE, 1500, &strip), 
+  new ExtrapolateAction(BLACK, BLUE, 1500, &strip),
   new WaitAction(1000),
   new ExtrapolateAction(BLACK, WHITE, 500, &strip),
   new ExtrapolateAction(WHITE, BLACK, 0, &strip),
   new WaitAction(1000),
+  new ExtrapolateAction(BLACK, WHITE, 50, &strip),
+  new ExtrapolateAction(BLACK, WHITE, 50, &strip),
   new ExtrapolateAction(BLACK, WHITE, 50, &strip),
   new WaitAction(100),
   new TerminateAction(&strip),
@@ -58,70 +60,77 @@ void setup() {
 
   reader.CheckState(g_context);
   pushButton.CheckState(g_context);
-  
+
   isSetupMode = pushButton.GetUndebouncedValue() == 1;
-  
+
   Serial.print("Debug "); Serial.println(isSetupMode);
-  
+
   brightness = 255 - reader.GetValue() / 4;
-  
+
   strip.begin();
   strip.setBrightness(brightness);
-  strip.show();  
+  strip.show();
 }
 
-void loop() {
-   g_context.now = millis();
-  
+void loop()
+{
+  g_context.now = millis();
+
   auto pushButtonChanged = pushButton.CheckState(g_context);
   auto brightnessChanged = reader.CheckState(g_context);
-  
+
   if (watchdog.IsTimeout(g_context))
   {
     Action::setAll(g_context, &strip, BLACK);
-    strip.show();
     actionIndex = -1;
     actionFinished = false;
-    return;
+    delay(1000);
+  }
+  else if (isSetupMode)
+  {
+    if (pushButton.IsPressed())
+    {
+      isSetupMode = false;
+    }
+    Action::setAll(g_context, &strip, WHITE);
+  }
+  else // normal action processing
+  {
+    if (actionIndex == -1 || actionFinished)
+    {
+      actionIndex = (actionIndex + 1) % (sizeof(actions) / sizeof(Action*));
+#if TRACE      
+      Serial.print("Action "); Serial.println(actionIndex);
+#endif
+      pAction = actions[actionIndex];
+      actionFinished = false;
+      pAction->Setup(g_context);
+    }
+
+    if (pAction)
+    {
+      actionFinished = !pAction->Step(g_context);
+    }
+
+    if (actionFinished)
+    {
+      pAction->Teardown(g_context);
+    }
   }
 
+  // always respond to brightness changes
   if (brightnessChanged)
   {
     brightness = 255 - reader.GetValue() / 4;
     Serial.print("Brightness "); Serial.println(brightness);
     strip.setBrightness(brightness);
     Action::setAll(g_context, &strip, g_context.lastColor.color);
-    strip.show();
     watchdog.Pat(g_context);
   }
-
-  if (isSetupMode)
+  
+  if (g_context.showNeeded)
   {
-    if (pushButton.IsPressed())
-    {
-      isSetupMode = false;      
-    }
-    Action::setAll(g_context, &strip, WHITE);
+    g_context.showNeeded = false;
     strip.show();
-    return;
-  }
-
-  if (actionIndex == -1 || actionFinished)
-  {
-    actionIndex = (actionIndex + 1) % (sizeof(actions) / sizeof(Action*));
-    Serial.print("Action "); Serial.println(actionIndex);
-    pAction = actions[actionIndex];
-    actionFinished = false;
-    pAction->Setup(g_context);
-  }
-
-  if (pAction)
-  {
-    actionFinished = !pAction->Step(g_context);
-  }
-
-  if (actionFinished)
-  {
-    pAction->Teardown(g_context);
   }
 }

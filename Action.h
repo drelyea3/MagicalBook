@@ -14,7 +14,7 @@ class Action
     static void setAll(Context& context, Adafruit_NeoPixel* pStrip, uint32_t color)
     {
       pStrip->fill(color);
-      pStrip->show();
+      context.showNeeded = true;
       context.lastColor.color = color;
     }
 };
@@ -32,7 +32,8 @@ class TerminateAction : public Action
       Action::setAll(context, _pStrip, BLACK);
     }
 
-    bool Step(Context& context) {
+    bool Step(Context& context) 
+    {
       return true;
     }
 };

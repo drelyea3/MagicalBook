@@ -9,4 +9,5 @@ class Context
   public:
     unsigned long now;
     RGB lastColor;
+    bool showNeeded;
 };
