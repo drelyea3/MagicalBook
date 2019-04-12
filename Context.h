@@ -4,9 +4,6 @@
 
 #include "color.h"
 
-#define LED_PIN    6
-#define LED_COUNT 40
-
 class Context
 {
   public:

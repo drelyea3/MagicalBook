@@ -1,5 +1,15 @@
 #include <Adafruit_NeoPixel.h>
 
+#define WATCHDOG_TIMEOUT_SECONDS 20
+
+#define ACTIVATE_BUTTON_PIN 3
+#define BRIGHTNESS_PIN 3
+#define BRIGHTNESS_TOLERANCE 8
+
+// NeoPixel definitions
+#define LED_PIN    6
+#define LED_COUNT 40
+
 #include "Context.h"
 #include "Color.h"
 #include "Watchdog.h"
@@ -11,13 +21,11 @@
 // The one and only global application context
 Context g_context;
 
-typedef uint32_t pfnColorSelector(int);
-
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
-Button pushButton(3);
-AnalogReader reader(3, 8);
-Watchdog watchdog(20 * 1000);
+Button pushButton(ACTIVATE_BUTTON_PIN);
+AnalogReader reader(BRIGHTNESS_PIN, BRIGHTNESS_TOLERANCE);
+Watchdog watchdog(WATCHDOG_TIMEOUT_SECONDS * 1000);
 
 Action* actions[] = {
   new ExtrapolateAction(BLACK, YELLOW, 1000, &strip),
