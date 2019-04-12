@@ -12,6 +12,7 @@ class AnalogReader : public PinIO
     bool CheckStateCore()
     {
       auto currentValue = analogRead(_pin);
+      //Serial.println(currentValue);
       if (abs(currentValue - _value) >= _tolerance)
       {
         _value = currentValue;

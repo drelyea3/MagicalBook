@@ -17,27 +17,7 @@ Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 Button pushButton(3);
 AnalogReader reader(3);
-Watchdog watchdog(5 * 1000);
-
-void setup() {
-  Serial.begin(115200);
-  Serial.println("Starting");
-
-  pushButton.SetWatchdog(&watchdog);
-  reader.SetWatchdog(&watchdog);
-
-  strip.begin();
-  strip.setBrightness(16);
-  strip.show();
-}
-
-void buttonPressed(int value)
-{
-  if (value)
-    Serial.println("Button pressed");
-  else
-    Serial.println("Button released");
-}
+Watchdog watchdog(20 * 1000);
 
 Action* actions[] = {
   new ExtrapolateAction(BLACK, YELLOW, 1000, &strip),
@@ -56,21 +36,65 @@ Action* actions[] = {
 int actionIndex = -1;
 bool actionFinished = false;
 Action* pAction;
+bool isSetupMode = false;
+RGB color;
+byte brightness;
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("Starting");
+
+  pushButton.SetWatchdog(&watchdog);
+  reader.SetWatchdog(&watchdog);
+
+  reader.CheckState(g_context);
+  pushButton.CheckState(g_context);
+  
+  isSetupMode = pushButton.GetUndebouncedValue() == 1;
+  
+  Serial.print("Debug "); Serial.println(isSetupMode);
+  
+  brightness = reader.GetValue() / 4;
+  
+  strip.begin();
+  strip.setBrightness(brightness);
+  strip.show();  
+}
 
 void loop() {
 
   g_context.now = millis();
   
-  pushButton.CheckState(g_context);
-
+  auto pushButtonChanged = pushButton.CheckState(g_context);
+  auto brightnessChanged = reader.CheckState(g_context);
+  
   if (watchdog.IsTimeout(g_context))
   {
     setAll(&strip, BLACK);
+    strip.show();
     actionIndex = -1;
     actionFinished = false;
     return;
   }
-  
+
+  if (brightnessChanged)
+  {
+    brightness = reader.GetValue() / 4;
+    Serial.print("Brightness "); Serial.println(brightness);
+    strip.setBrightness(brightness);
+  }
+
+  if (isSetupMode)
+  {
+    if (pushButton.IsPressed())
+    {
+      isSetupMode = false;      
+    }
+    setAll(&strip, WHITE);
+    strip.show();
+    return;
+  }
+
   if (actionIndex == -1 || actionFinished)
   {
     actionIndex = (actionIndex + 1) % (sizeof(actions) / sizeof(Action*));
