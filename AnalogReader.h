@@ -5,8 +5,6 @@
 // https://www.megunolink.com/documentation/arduino-libraries/exponential-filter/
 #include "Filter.h"
 
-// Create a new exponential filter with a weight of 5 and an initial value of 0.
-
 class AnalogReader : public PinIO
 {
   private:

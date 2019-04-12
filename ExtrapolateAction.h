@@ -49,7 +49,7 @@ class ExtrapolateAction : public Action
       long elapsed = context.now - _start;
       if (elapsed >= _duration)
       {
-        setAll(context, _pStrip, _to.color);
+        Action::setAll(context, _pStrip, _to.color);
         return false;
       }
 

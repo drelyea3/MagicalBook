@@ -9,18 +9,18 @@ class Action
     virtual void Setup(Context& context) {};
     virtual bool Step(Context& context) = 0;
     virtual void Teardown(Context& context) {};
+
+    static void setAll(Context& context, Adafruit_NeoPixel* pStrip, uint32_t color) {
+      auto count = pStrip->numPixels();
+      for (int i = 0; i < count; i++) {
+        pStrip->setPixelColor(i, color);
+      }
+      pStrip->show();
+      context.lastColor.color = color;
+    }
 };
 
 #include "Button.h"
-
-void setAll(Context& context, Adafruit_NeoPixel* pStrip, uint32_t color) {
-  auto count = pStrip->numPixels();
-  for (int i = 0; i < count; i++) {
-    pStrip->setPixelColor(i, color);
-  }
-  pStrip->show();
-  context.lastColor.color = color;
-}
 
 class TerminateAction : public Action
 {
@@ -30,9 +30,9 @@ class TerminateAction : public Action
     TerminateAction(Adafruit_NeoPixel* pStrip) : _pStrip(pStrip) {}
     void Setup(Context& context)
     {
-      setAll(context, _pStrip, BLACK);
+      Action::setAll(context, _pStrip, BLACK);
     }
-    
+
     bool Step(Context& context) {
       return true;
     }

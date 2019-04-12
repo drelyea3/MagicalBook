@@ -70,7 +70,7 @@ void loop() {
   
   if (watchdog.IsTimeout(g_context))
   {
-    setAll(g_context, &strip, BLACK);
+    Action::setAll(g_context, &strip, BLACK);
     strip.show();
     actionIndex = -1;
     actionFinished = false;
@@ -82,7 +82,7 @@ void loop() {
     brightness = 255 - reader.GetValue() / 4;
     Serial.print("Brightness "); Serial.println(brightness);
     strip.setBrightness(brightness);
-    setAll(g_context, &strip, g_context.lastColor.color);
+    Action::setAll(g_context, &strip, g_context.lastColor.color);
     strip.show();
     watchdog.Pat(g_context);
   }
@@ -93,7 +93,7 @@ void loop() {
     {
       isSetupMode = false;      
     }
-    setAll(g_context, &strip, WHITE);
+    Action::setAll(g_context, &strip, WHITE);
     strip.show();
     return;
   }
