@@ -1,14 +1,4 @@
 #include <Adafruit_NeoPixel.h>
-#define TRACE 1
-#define WATCHDOG_TIMEOUT_SECONDS 20
-
-#define ACTIVATE_BUTTON_PIN 3
-#define BRIGHTNESS_PIN 3
-#define BRIGHTNESS_TOLERANCE 8
-
-// NeoPixel definitions
-#define LED_PIN    6
-#define LED_COUNT 40
 
 #include "Context.h"
 #include "Color.h"
@@ -18,32 +8,37 @@
 #include "Action.h"
 #include "ExtrapolateAction.h"
 
+#define TRACE 1
+#define WATCHDOG_TIMEOUT_SECONDS 20
+
+#define ACTIVATE_BUTTON_PIN 3
+#define BRIGHTNESS_PIN 3
+#define BRIGHTNESS_TOLERANCE 8
+
 // The one and only global application context
 Context g_context;
 
-Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+Action* actions[] = {
+  new ExtrapolateAction(BLACK, YELLOW, 1000),
+  //new WaitForButton(&pushButton),
+  new WaitAction(2000), // because pushbutton died
+  new ExtrapolateAction(BLACK, RED, 1500),
+  new ExtrapolateAction(BLACK, GREEN, 1500),
+  new ExtrapolateAction(BLACK, BLUE, 1500),
+  new WaitAction(1000),
+  new ExtrapolateAction(BLACK, WHITE, 500),
+  new ExtrapolateAction(WHITE, BLACK, 0),
+  new WaitAction(1000),
+  new ExtrapolateAction(BLACK, WHITE, 50),
+  new ExtrapolateAction(BLACK, WHITE, 50),
+  new ExtrapolateAction(BLACK, WHITE, 1000),
+  new WaitAction(100),
+  new TerminateAction(),
+};
 
 Button pushButton(ACTIVATE_BUTTON_PIN);
 AnalogReader reader(BRIGHTNESS_PIN, BRIGHTNESS_TOLERANCE);
 Watchdog watchdog(WATCHDOG_TIMEOUT_SECONDS * 1000);
-
-Action* actions[] = {
-  new ExtrapolateAction(BLACK, YELLOW, 1000, &strip),
-  //new WaitForButton(&pushButton),
-  new WaitAction(2000), // because pushbutton died
-  new ExtrapolateAction(BLACK, RED, 1500, &strip),
-  new ExtrapolateAction(BLACK, GREEN, 1500, &strip),
-  new ExtrapolateAction(BLACK, BLUE, 1500, &strip),
-  new WaitAction(1000),
-  new ExtrapolateAction(BLACK, WHITE, 500, &strip),
-  new ExtrapolateAction(WHITE, BLACK, 0, &strip),
-  new WaitAction(1000),
-  new ExtrapolateAction(BLACK, WHITE, 50, &strip),
-  new ExtrapolateAction(BLACK, WHITE, 50, &strip),
-  new ExtrapolateAction(BLACK, WHITE, 1000, &strip),
-  new WaitAction(100),
-  new TerminateAction(&strip),
-};
 
 int actionIndex = -1;
 bool actionFinished = false;
@@ -67,9 +62,9 @@ void setup() {
 
   brightness = 255 - reader.GetValue() / 4;
 
-  strip.begin();
-  strip.setBrightness(brightness);
-  strip.show();
+  g_context.strip.begin();
+  g_context.strip.setBrightness(brightness);
+  g_context.strip.show();
 }
 
 void loop()
@@ -81,7 +76,7 @@ void loop()
 
   if (watchdog.IsTimeout(g_context))
   {
-    Action::setAll(g_context, &strip, BLACK);
+    Action::setAll(g_context, BLACK);
     actionIndex = -1;
     actionFinished = false;
     delay(1000);
@@ -92,7 +87,7 @@ void loop()
     {
       isSetupMode = false;
     }
-    Action::setAll(g_context, &strip, WHITE);
+    Action::setAll(g_context, WHITE);
   }
   else // normal action processing
   {
@@ -123,14 +118,14 @@ void loop()
   {
     brightness = 255 - reader.GetValue() / 4;
     Serial.print("Brightness "); Serial.println(brightness);
-    strip.setBrightness(brightness);
-    Action::setAll(g_context, &strip, g_context.lastColor.color);
+    g_context.strip.setBrightness(brightness);
+    Action::setAll(g_context, g_context.lastColor.color);
     watchdog.Pat(g_context);
   }
 
   if (g_context.showNeeded)
   {
     g_context.showNeeded = false;
-    strip.show();
+    g_context.strip.show();
   }
 }

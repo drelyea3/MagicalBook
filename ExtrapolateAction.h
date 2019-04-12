@@ -6,7 +6,6 @@
 class ExtrapolateAction : public Action
 {
   private:
-    Adafruit_NeoPixel* _pStrip;
     RGB _from;
     RGB _to;
     int _deltaR;
@@ -17,14 +16,14 @@ class ExtrapolateAction : public Action
     bool _fromSpecified = false;
 
   public:
-    ExtrapolateAction(uint32_t from, uint32_t to, int duration, Adafruit_NeoPixel* pStrip) : _duration(duration), _pStrip(pStrip)
+    ExtrapolateAction(uint32_t from, uint32_t to, int duration) : _duration(duration)
     {
       _from.color = from;
       _to.color = to;
       _fromSpecified = true;
     }
 
-    ExtrapolateAction(uint32_t to, int duration, Adafruit_NeoPixel* pStrip) : _duration(duration), _pStrip(pStrip)
+    ExtrapolateAction(uint32_t to, int duration) : _duration(duration)
     {
       _to.color = to;
     }
@@ -33,11 +32,11 @@ class ExtrapolateAction : public Action
     {
       if (!_fromSpecified)
       {
-        _from.color = _pStrip->getPixelColor(0);
+        _from = context.lastColor;
         Serial.print("from ");
         Serial.println(_from.color, HEX);
       }
-      
+
       _start = context.now;
       _deltaR = (int)_to.r - (int)_from.r;
       _deltaG = (int)_to.g - (int)_from.g;
@@ -49,7 +48,7 @@ class ExtrapolateAction : public Action
       long elapsed = context.now - _start;
       if (elapsed >= _duration)
       {
-        Action::setAll(context, _pStrip, _to.color);
+        Action::setAll(context, _to.color);
         return false;
       }
 
@@ -58,7 +57,7 @@ class ExtrapolateAction : public Action
       c.r = _from.r + (elapsed * _deltaR) / _duration;
       c.g = _from.g + (elapsed * _deltaG) / _duration;
       c.b = _from.b + (elapsed * _deltaB) / _duration;
-      setAll(context, _pStrip, c.color);
+      Action::setAll(context, c.color);
 
       return true;
     }

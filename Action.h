@@ -11,9 +11,9 @@ class Action
     virtual bool Step(Context& context) = 0;
     virtual void Teardown(Context& context) {};
 
-    static void setAll(Context& context, Adafruit_NeoPixel* pStrip, uint32_t color)
+    static void setAll(Context& context, uint32_t color)
     {
-      pStrip->fill(color);
+      context.strip.fill(color);
       context.showNeeded = true;
       context.lastColor.color = color;
     }
@@ -21,15 +21,10 @@ class Action
 
 class TerminateAction : public Action
 {
-  private:
-    Adafruit_NeoPixel* _pStrip;
-
   public:
-    TerminateAction(Adafruit_NeoPixel* pStrip) : _pStrip(pStrip) {}
-
     void Setup(Context& context)
     {
-      Action::setAll(context, _pStrip, BLACK);
+      Action::setAll(context, BLACK);
     }
 
     bool Step(Context& context) 
