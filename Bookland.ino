@@ -17,7 +17,7 @@ Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 Button pushButton(3);
 AnalogReader reader(3, 8);
-Watchdog watchdog(10 * 1000);
+Watchdog watchdog(20 * 1000);
 
 Action* actions[] = {
   new ExtrapolateAction(BLACK, YELLOW, 1000, &strip),
@@ -53,7 +53,7 @@ void setup() {
   
   Serial.print("Debug "); Serial.println(isSetupMode);
   
-  brightness = reader.GetValue() / 4;
+  brightness = 255 - reader.GetValue() / 4;
   
   strip.begin();
   strip.setBrightness(brightness);
@@ -77,7 +77,7 @@ void loop() {
 
   if (brightnessChanged)
   {
-    brightness = reader.GetValue() / 4;
+    brightness = 255 - reader.GetValue() / 4;
     Serial.print("Brightness "); Serial.println(brightness);
     strip.setBrightness(brightness);
     setAll(g_context, &strip, g_context.lastColor.color);
