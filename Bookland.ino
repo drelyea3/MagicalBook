@@ -40,7 +40,7 @@ Action* actions[] = {
   new WaitAction(1000),
   new ExtrapolateAction(BLACK, WHITE, 50, &strip),
   new ExtrapolateAction(BLACK, WHITE, 50, &strip),
-  new ExtrapolateAction(BLACK, WHITE, 50, &strip),
+  new ExtrapolateAction(BLACK, WHITE, 1000, &strip),
   new WaitAction(100),
   new TerminateAction(&strip),
 };
@@ -99,7 +99,7 @@ void loop()
     if (actionIndex == -1 || actionFinished)
     {
       actionIndex = (actionIndex + 1) % (sizeof(actions) / sizeof(Action*));
-#if TRACE      
+#if TRACE
       Serial.print("Action "); Serial.println(actionIndex);
 #endif
       pAction = actions[actionIndex];
@@ -127,7 +127,7 @@ void loop()
     Action::setAll(g_context, &strip, g_context.lastColor.color);
     watchdog.Pat(g_context);
   }
-  
+
   if (g_context.showNeeded)
   {
     g_context.showNeeded = false;
