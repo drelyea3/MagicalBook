@@ -2,6 +2,7 @@
 
 #include "Color.h"
 #include "context.h"
+#include "Button.h"
 
 class Action
 {
@@ -10,15 +11,13 @@ class Action
     virtual bool Step(Context& context) = 0;
     virtual void Teardown(Context& context) {};
 
-    static void setAll(Context& context, Adafruit_NeoPixel* pStrip, uint32_t color) 
+    static void setAll(Context& context, Adafruit_NeoPixel* pStrip, uint32_t color)
     {
       pStrip->fill(color);
       pStrip->show();
       context.lastColor.color = color;
     }
 };
-
-#include "Button.h"
 
 class TerminateAction : public Action
 {
@@ -62,7 +61,7 @@ class WaitForButton : public Action
 {
   private:
     Button* _pButton;
-    
+
   public:
     WaitForButton(Button* pButton) : _pButton(pButton)
     {
