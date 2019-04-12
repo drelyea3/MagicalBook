@@ -2,20 +2,27 @@
 
 #include "PinIO.h"
 
+// https://www.megunolink.com/documentation/arduino-libraries/exponential-filter/
+#include "Filter.h"
+
+// Create a new exponential filter with a weight of 5 and an initial value of 0.
+
 class AnalogReader : public PinIO
 {
   private:
     static const int DEFAULT_TOLERANCE = 4;
     int _tolerance;
-
+    ExponentialFilter<long> inputFilter = ExponentialFilter<long>(20, 0);
   protected:
     bool CheckStateCore()
     {
-      auto currentValue = analogRead(_pin);
-      //Serial.println(currentValue);
-      if (abs(currentValue - _value) >= _tolerance)
+      int currentValue = analogRead(_pin);
+      inputFilter.Filter(currentValue);
+      int filteredValue = inputFilter.Current();
+      if (abs(filteredValue - _value) >= _tolerance)
       {
-        _value = currentValue;
+        Serial.print("raw "); Serial.print(currentValue); Serial.print(" filtered "); Serial.println(filteredValue);
+        _value = filteredValue;
         return true;
       }
       return false;

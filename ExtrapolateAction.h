@@ -49,7 +49,7 @@ class ExtrapolateAction : public Action
       long elapsed = context.now - _start;
       if (elapsed >= _duration)
       {
-        setAll(_pStrip, _to.color);
+        setAll(context, _pStrip, _to.color);
         return false;
       }
 
@@ -58,7 +58,7 @@ class ExtrapolateAction : public Action
       c.r = _from.r + (elapsed * _deltaR) / _duration;
       c.g = _from.g + (elapsed * _deltaG) / _duration;
       c.b = _from.b + (elapsed * _deltaB) / _duration;
-      setAll(_pStrip, c.color);
+      setAll(context, _pStrip, c.color);
 
       return true;
     }

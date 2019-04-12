@@ -16,8 +16,8 @@ typedef uint32_t pfnColorSelector(int);
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 Button pushButton(3);
-AnalogReader reader(3);
-Watchdog watchdog(20 * 1000);
+AnalogReader reader(3, 8);
+Watchdog watchdog(10 * 1000);
 
 Action* actions[] = {
   new ExtrapolateAction(BLACK, YELLOW, 1000, &strip),
@@ -27,9 +27,9 @@ Action* actions[] = {
   new WaitAction(1000),
   new ExtrapolateAction(BLACK, WHITE, 500, &strip),
   new ExtrapolateAction(WHITE, BLACK, 0, &strip),
-  new WaitAction(2000),
-  new ExtrapolateAction(BLACK, WHITE, 500, &strip),
-  new WaitAction(2000),
+  new WaitAction(1000),
+  new ExtrapolateAction(BLACK, WHITE, 50, &strip),
+  new WaitAction(100),
   new TerminateAction(&strip),
 };
 
@@ -45,7 +45,6 @@ void setup() {
   Serial.println("Starting");
 
   pushButton.SetWatchdog(&watchdog);
-  reader.SetWatchdog(&watchdog);
 
   reader.CheckState(g_context);
   pushButton.CheckState(g_context);
@@ -62,15 +61,14 @@ void setup() {
 }
 
 void loop() {
-
-  g_context.now = millis();
+   g_context.now = millis();
   
   auto pushButtonChanged = pushButton.CheckState(g_context);
   auto brightnessChanged = reader.CheckState(g_context);
   
   if (watchdog.IsTimeout(g_context))
   {
-    setAll(&strip, BLACK);
+    setAll(g_context, &strip, BLACK);
     strip.show();
     actionIndex = -1;
     actionFinished = false;
@@ -82,6 +80,9 @@ void loop() {
     brightness = reader.GetValue() / 4;
     Serial.print("Brightness "); Serial.println(brightness);
     strip.setBrightness(brightness);
+    setAll(g_context, &strip, g_context.lastColor.color);
+    strip.show();
+    watchdog.Pat(g_context);
   }
 
   if (isSetupMode)
@@ -90,7 +91,7 @@ void loop() {
     {
       isSetupMode = false;      
     }
-    setAll(&strip, WHITE);
+    setAll(g_context, &strip, WHITE);
     strip.show();
     return;
   }
