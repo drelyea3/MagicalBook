@@ -21,9 +21,11 @@ Watchdog watchdog(20 * 1000);
 
 Action* actions[] = {
   new ExtrapolateAction(BLACK, YELLOW, 1000, &strip),
-  new WaitForButton(&pushButton),
-  new ExtrapolateAction(YELLOW, RED, 1500, &strip),
-  new ExtrapolateAction(RED, GREEN, 1500, &strip),
+  //new WaitForButton(&pushButton),
+  new WaitAction(2000), // because pushbutton died
+  new ExtrapolateAction(BLACK, RED, 1500, &strip),
+  new ExtrapolateAction(BLACK, GREEN, 1500, &strip),
+  new ExtrapolateAction(BLACK, BLUE, 1500, &strip), 
   new WaitAction(1000),
   new ExtrapolateAction(BLACK, WHITE, 500, &strip),
   new ExtrapolateAction(WHITE, BLACK, 0, &strip),
