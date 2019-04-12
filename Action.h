@@ -26,8 +26,10 @@ class TerminateAction : public Action
 {
   private:
     Adafruit_NeoPixel* _pStrip;
+
   public:
     TerminateAction(Adafruit_NeoPixel* pStrip) : _pStrip(pStrip) {}
+
     void Setup(Context& context)
     {
       Action::setAll(context, _pStrip, BLACK);
@@ -47,10 +49,13 @@ class WaitAction : public Action
   public:
     WaitAction(int ms) : _delay(ms) {}
 
-    void Setup(Context& context) {
+    void Setup(Context& context)
+    {
       _start = context.now;
     }
-    bool Step(Context& context) {
+
+    bool Step(Context& context)
+    {
       return context.now - _start < _delay;
     }
 };
@@ -59,12 +64,14 @@ class WaitForButton : public Action
 {
   private:
     Button* _pButton;
+    
   public:
     WaitForButton(Button* pButton) : _pButton(pButton)
     {
     }
 
-    void Setup(Context& context) {
+    void Setup(Context& context)
+    {
       Serial.println("Waiting for button press");
     }
 
@@ -73,7 +80,8 @@ class WaitForButton : public Action
       return !_pButton->GetValue();
     }
 
-    void Teardown(Context& context) {
+    void Teardown(Context& context)
+    {
       Serial.println("Got button press");
     }
 };

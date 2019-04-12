@@ -10,6 +10,7 @@ class Button : public PinIO
     unsigned long _lastDebounceTime = 0;
     bool _isPressed;
     bool _isReleased;
+    
   public:
     Button(int pin) : PinIO(pin)
     {

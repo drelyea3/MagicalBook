@@ -7,6 +7,7 @@ class PinIO
 {
   public:
     typedef void fnValueChangedHandler(int value);
+    
   private:
     const static int MAX_HANDLERS = 4;
     fnValueChangedHandler* _handlers[MAX_HANDLERS];
