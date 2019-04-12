@@ -10,11 +10,9 @@ class Action
     virtual bool Step(Context& context) = 0;
     virtual void Teardown(Context& context) {};
 
-    static void setAll(Context& context, Adafruit_NeoPixel* pStrip, uint32_t color) {
-      auto count = pStrip->numPixels();
-      for (int i = 0; i < count; i++) {
-        pStrip->setPixelColor(i, color);
-      }
+    static void setAll(Context& context, Adafruit_NeoPixel* pStrip, uint32_t color) 
+    {
+      pStrip->fill(color);
       pStrip->show();
       context.lastColor.color = color;
     }
