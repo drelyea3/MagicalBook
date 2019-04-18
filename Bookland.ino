@@ -31,14 +31,12 @@ AnalogReader reader(BRIGHTNESS_PIN, BRIGHTNESS_TOLERANCE);
 Watchdog watchdog(WATCHDOG_TIMEOUT_SECONDS * 1000);
 
 Action* actions[] = {
-  new WaitForButton(&openSwitch, false),
-  new WaitForButton(&openSwitch, true),
   new ExtrapolateAction(BLACK, YELLOW, 1000),
-  #if NO_INPUT
+#if NO_INPUT
   new WaitAction(2000), // because pushbutton died
-  #else
+#else
   new WaitForButton(&pushButton, true),
-  #endif
+#endif
   new ExtrapolateAction(BLACK, RED, 1500),
   new ExtrapolateAction(BLACK, GREEN, 1500),
   new ExtrapolateAction(BLACK, BLUE, 1500),
@@ -66,13 +64,13 @@ void setup() {
 
   pinMode(POWER_LED_PIN, OUTPUT);
   analogWrite(POWER_LED_PIN, POWER_LED_BRIGHTNESS);
-  
+
   pushButton.SetWatchdog(&watchdog);
 
   reader.CheckState(g_context);
   pushButton.CheckState(g_context);
   openSwitch.CheckState(g_context);
-  
+
   isSetupMode = pushButton.GetUndebouncedValue() == 1;
 
   Serial.print("Debug "); Serial.println(isSetupMode);
@@ -85,18 +83,33 @@ void setup() {
   g_context.strip.show();
 }
 
+bool isClosed = true;
+
 void loop()
 {
   g_context.now = millis();
 
   auto pushButtonChanged = pushButton.CheckState(g_context);
   auto brightnessChanged = reader.CheckState(g_context);
+  
   auto openChanged = openSwitch.CheckState(g_context);
   if (openChanged) {
-    Serial.print("open ");
-    Serial.println(openSwitch.GetValue());
+    isClosed = !openSwitch.GetValue();
+    if (isClosed)
+    {
+      actionIndex = -1;
+      actionFinished = false;
+      Action::setAll(g_context, BLACK);
+      g_context.strip.show();
+      isClosed = true;
+    }
   }
 
+  if (isClosed)
+  {
+    return;
+  }
+  /*
   if (watchdog.IsTimeout(g_context))
   {
     Action::setAll(g_context, BLACK);
@@ -104,7 +117,8 @@ void loop()
     actionFinished = false;
     delay(1000);
   }
-  else if (isSetupMode)
+  else */
+  if (isSetupMode)
   {
     if (pushButton.IsPressed())
     {
