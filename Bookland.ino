@@ -1,5 +1,7 @@
 #include <Adafruit_NeoPixel.h>
 
+#define NO_INPUT 0
+
 #include "Context.h"
 #include "Color.h"
 #include "Watchdog.h"
@@ -11,17 +13,32 @@
 #define TRACE 1
 #define WATCHDOG_TIMEOUT_SECONDS 20
 
-#define ACTIVATE_BUTTON_PIN 3
+#define OPEN_SWITCH_PIN 3
+#define ACTIVATE_BUTTON_PIN 4
+#define POWER_LED_PIN 5
+#define POWER_LED_BRIGHTNESS 8
+
 #define BRIGHTNESS_PIN 3
 #define BRIGHTNESS_TOLERANCE 8
 
 // The one and only global application context
 Context g_context;
 
+
+Button pushButton(ACTIVATE_BUTTON_PIN);
+Button openSwitch(OPEN_SWITCH_PIN);
+AnalogReader reader(BRIGHTNESS_PIN, BRIGHTNESS_TOLERANCE);
+Watchdog watchdog(WATCHDOG_TIMEOUT_SECONDS * 1000);
+
 Action* actions[] = {
+  new WaitForButton(&openSwitch, false),
+  new WaitForButton(&openSwitch, true),
   new ExtrapolateAction(BLACK, YELLOW, 1000),
-  //new WaitForButton(&pushButton),
+  #if NO_INPUT
   new WaitAction(2000), // because pushbutton died
+  #else
+  new WaitForButton(&pushButton, true),
+  #endif
   new ExtrapolateAction(BLACK, RED, 1500),
   new ExtrapolateAction(BLACK, GREEN, 1500),
   new ExtrapolateAction(BLACK, BLUE, 1500),
@@ -36,34 +53,35 @@ Action* actions[] = {
   new TerminateAction(),
 };
 
-Button pushButton(ACTIVATE_BUTTON_PIN);
-AnalogReader reader(BRIGHTNESS_PIN, BRIGHTNESS_TOLERANCE);
-Watchdog watchdog(WATCHDOG_TIMEOUT_SECONDS * 1000);
-
 int actionIndex = -1;
 bool actionFinished = false;
 Action* pAction;
 bool isSetupMode = false;
 RGB color;
-byte brightness;
+byte brightness = 64;
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Starting");
 
+  pinMode(POWER_LED_PIN, OUTPUT);
+  analogWrite(POWER_LED_PIN, POWER_LED_BRIGHTNESS);
+  
   pushButton.SetWatchdog(&watchdog);
 
   reader.CheckState(g_context);
   pushButton.CheckState(g_context);
-
+  openSwitch.CheckState(g_context);
+  
   isSetupMode = pushButton.GetUndebouncedValue() == 1;
 
   Serial.print("Debug "); Serial.println(isSetupMode);
 
-  brightness = 255 - reader.GetValue() / 4;
+  //brightness = 255 - reader.GetValue() / 4;
 
   g_context.strip.begin();
   g_context.strip.setBrightness(brightness);
+  Action::setAll(g_context, BLACK);
   g_context.strip.show();
 }
 
@@ -73,6 +91,11 @@ void loop()
 
   auto pushButtonChanged = pushButton.CheckState(g_context);
   auto brightnessChanged = reader.CheckState(g_context);
+  auto openChanged = openSwitch.CheckState(g_context);
+  if (openChanged) {
+    Serial.print("open ");
+    Serial.println(openSwitch.GetValue());
+  }
 
   if (watchdog.IsTimeout(g_context))
   {
@@ -116,8 +139,8 @@ void loop()
   // always respond to brightness changes
   if (brightnessChanged)
   {
-    brightness = 255 - reader.GetValue() / 4;
-    Serial.print("Brightness "); Serial.println(brightness);
+    //brightness = 255 - reader.GetValue() / 4;
+    //Serial.print("Brightness "); Serial.println(brightness);
     g_context.strip.setBrightness(brightness);
     Action::setAll(g_context, g_context.lastColor.color);
     watchdog.Pat(g_context);

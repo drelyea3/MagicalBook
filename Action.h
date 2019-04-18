@@ -57,9 +57,9 @@ class WaitForButton : public Action
 {
   private:
     Button* _pButton;
-
+    bool _isPressed;
   public:
-    WaitForButton(Button* pButton) : _pButton(pButton)
+    WaitForButton(Button* pButton, bool pressed) : _pButton(pButton), _isPressed(pressed)
     {
     }
 
@@ -70,7 +70,7 @@ class WaitForButton : public Action
 
     bool Step(Context& context)
     {
-      return !_pButton->GetValue();
+      return _isPressed == !_pButton->GetValue();
     }
 
     void Teardown(Context& context)
