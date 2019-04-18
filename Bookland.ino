@@ -51,12 +51,13 @@ Action* actions[] = {
   new TerminateAction(),
 };
 
-int actionIndex = -1;
+int actionIndex = -2;
 bool actionFinished = false;
 Action* pAction;
 bool isSetupMode = false;
 RGB color;
 byte brightness = 64;
+bool isClosed = true;
 
 void setup() {
   Serial.begin(115200);
@@ -83,18 +84,17 @@ void setup() {
   g_context.strip.show();
 }
 
-bool isClosed = true;
-
 void loop()
 {
   g_context.now = millis();
 
   auto pushButtonChanged = pushButton.CheckState(g_context);
   auto brightnessChanged = reader.CheckState(g_context);
-  
   auto openChanged = openSwitch.CheckState(g_context);
+  
   if (openChanged) {
-    isClosed = !openSwitch.GetValue();
+    isClosed = openSwitch.GetValue() == 0;
+    Serial.print("isClosed A = "); Serial.println(isClosed);
     if (isClosed)
     {
       actionIndex = -1;
