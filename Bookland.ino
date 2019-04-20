@@ -1,6 +1,6 @@
 #include <Adafruit_NeoPixel.h>
 
-#define NO_INPUT 0
+#define NO_INPUT 1
 
 #include "Context.h"
 #include "Color.h"
