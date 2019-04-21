@@ -3,7 +3,7 @@
 #include "Action.h"
 #include "Color.h"
 
-class ExtrapolateAction : public Action
+class ColorExtrapolator
 {
   private:
     RGB _from;
@@ -13,7 +13,59 @@ class ExtrapolateAction : public Action
     int _deltaB;
     int _duration;
     unsigned long _start;
+
+    int _firstPixel;
+    int _pixelCount;
+
+  public:
+    ColorExtrapolator(int firstPixel, int pixelCount, uint32_t from, uint32_t to, int duration) :
+      _firstPixel(firstPixel), _pixelCount(pixelCount)
+    {
+      Configure(from, to, duration);
+    }
+
+    void Configure(uint32_t from, uint32_t to, int duration)
+    {
+      _from.color = from;
+      _to.color = to;
+      _duration = duration;
+      _deltaR = (int)_to.r - (int)_from.r;
+      _deltaG = (int)_to.g - (int)_from.g;
+      _deltaB = (int)_to.b - (int)_from.b;
+    }
+
+    void Setup(Context& context)
+    {
+      _start = context.now;
+    }
+
+    uint32_t Step(Context& context)
+    {
+      long elapsed = context.now - _start;
+      if (elapsed >= _duration)
+      {
+        return _to.color;
+      }
+
+      RGB c;
+
+      c.r = _from.r + (elapsed * _deltaR) / _duration;
+      c.g = _from.g + (elapsed * _deltaG) / _duration;
+      c.b = _from.b + (elapsed * _deltaB) / _duration;
+
+      return c.color;
+    }
+};
+
+class ExtrapolateAction : public Action
+{
+  private:
+    ColorExtrapolator* _pExtrapolator;
+    RGB _from;
+    RGB _to;
+    int _duration;
     bool _fromSpecified = false;
+    unsigned long _start;
 
   public:
     ExtrapolateAction(uint32_t from, uint32_t to, int duration) : _duration(duration)
@@ -33,32 +85,25 @@ class ExtrapolateAction : public Action
       if (!_fromSpecified)
       {
         _from = context.lastColor;
-        Serial.print("from ");
-        Serial.println(_from.color, HEX);
       }
 
+      _pExtrapolator = new ColorExtrapolator(0, LED_COUNT, _from.color, _to.color, _duration);
+      _pExtrapolator->Setup(context);      
+
       _start = context.now;
-      _deltaR = (int)_to.r - (int)_from.r;
-      _deltaG = (int)_to.g - (int)_from.g;
-      _deltaB = (int)_to.b - (int)_from.b;
     }
 
     bool Step(Context& context)
     {
       long elapsed = context.now - _start;
-      if (elapsed >= _duration)
-      {
-        Action::setAll(context, _to.color);
-        return false;
-      }
+      
+      auto c = _pExtrapolator->Step(context);
+      Action::setAll(context, c);
+      return elapsed < _duration;
+    }
 
-      RGB c;
-
-      c.r = _from.r + (elapsed * _deltaR) / _duration;
-      c.g = _from.g + (elapsed * _deltaG) / _duration;
-      c.b = _from.b + (elapsed * _deltaB) / _duration;
-      Action::setAll(context, c.color);
-
-      return true;
+    void Teardown(Context& context)
+    {
+      delete _pExtrapolator;
     }
 };
