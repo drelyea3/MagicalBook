@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Adafruit_NeoPixel.h>
+#include "Device.h"
 
 // NeoPixel definitions
 #define LED_PIN    6

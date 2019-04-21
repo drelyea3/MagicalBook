@@ -2,6 +2,7 @@
 
 #include "Action.h"
 #include "Color.h"
+#include "Device.h"
 
 class ColorExtrapolator
 {
@@ -14,12 +15,8 @@ class ColorExtrapolator
     int _duration;
     unsigned long _start;
 
-    int _firstPixel;
-    int _pixelCount;
-
   public:
-    ColorExtrapolator(int firstPixel, int pixelCount, uint32_t from, uint32_t to, int duration) :
-      _firstPixel(firstPixel), _pixelCount(pixelCount)
+    ColorExtrapolator(uint32_t from, uint32_t to, int duration)
     {
       Configure(from, to, duration);
     }
@@ -57,6 +54,47 @@ class ColorExtrapolator
     }
 };
 
+class DeviceExtrapolateAction : public Action
+{
+  private:
+    Device* _pDevice;     
+    ColorExtrapolator* _pExtrapolator;
+    RGB _from;
+    RGB _to;
+    int _duration;
+    unsigned long _start;
+
+  public:
+    DeviceExtrapolateAction(Device* pDevice, uint32_t from, uint32_t to, int duration) 
+    : _pDevice(pDevice), _duration(duration)
+    {
+      _from.color = from;
+      _to.color = to;
+    }
+
+    void Setup(Context& context)
+    {
+      _pExtrapolator = new ColorExtrapolator(_from.color, _to.color, _duration);
+      _pExtrapolator->Setup(context);      
+      _start = context.now;
+    }
+
+    bool Step(Context& context)
+    {
+      long elapsed = context.now - _start;
+      
+      auto c = _pExtrapolator->Step(context);
+      context.showNeeded |= _pDevice->SetColor(context.strip, c);
+
+      return elapsed < _duration;
+    }
+
+    void Teardown(Context& context)
+    {
+      delete _pExtrapolator;
+    }
+};
+
 class ExtrapolateAction : public Action
 {
   private:
@@ -87,7 +125,7 @@ class ExtrapolateAction : public Action
         _from = context.lastColor;
       }
 
-      _pExtrapolator = new ColorExtrapolator(0, LED_COUNT, _from.color, _to.color, _duration);
+      _pExtrapolator = new ColorExtrapolator(_from.color, _to.color, _duration);
       _pExtrapolator->Setup(context);      
 
       _start = context.now;
