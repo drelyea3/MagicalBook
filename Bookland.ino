@@ -2,11 +2,11 @@
 
 #include "Context.h"
 #include "Color.h"
+#include "Device.h"
 #include "Watchdog.h"
 #include "Button.h"
 #include "AnalogReader.h"
 #include "Action.h"
-#include "ExtrapolateAction.h"
 
 #define TRACE 1
 
@@ -25,13 +25,25 @@ Context g_context;
 Device dev0(0, 20);
 Device dev1(20, 20);
 
+#define WAIT(D) ActionType::Wait, D
 #define COLOR_1(D, FROM, TO) ActionType::Color1, D, FROM, TO
 #define COLOR_2(D, FROM1, TO1, FROM2, TO2) ActionType::Color2, D, FROM1, TO1, FROM1, TO2
 #define COLOR_TO_1(D, TO) ActionType::ColorTo1, D, TO
 #define COLOR_TO_2(D, TO1, TO2) ActionType::ColorTo2, D, TO1, TO2
 
 const static uint32_t actionData[] = {
-  COLOR_1(1000, BLACK, COOL),
+
+  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
+  COLOR_2(100, BLACK, GREEN, BLACK, BLUE),
+  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
+  COLOR_2(100, BLACK, GREEN, BLACK, BLUE),
+  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
+  COLOR_2(100, BLACK, GREEN, BLACK, BLUE),
+  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
+  COLOR_2(100, BLACK, GREEN, BLACK, BLUE),
+  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
+  COLOR_2(100, BLACK, GREEN, BLACK, BLUE),
+  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
   COLOR_TO_2(100, GREEN, BLUE),
   COLOR_TO_2(100, BLUE, GREEN),
   COLOR_TO_2(100, GREEN, BLUE),
@@ -75,9 +87,13 @@ void setup() {
   pushButton.CheckState(g_context);
   g_context.strip.begin();
   g_context.strip.setBrightness(brightness);
-  Action::setAll(g_context, BLACK);
+  dev0.SetColor(g_context, 0);
+  dev1.SetColor(g_context, 0);
   g_context.strip.show();
 }
+
+unsigned long _waitStart;
+uint32_t _waitDuration;
 
 void SetupAction(Context& context, ActionType action)
 {
@@ -85,9 +101,16 @@ void SetupAction(Context& context, ActionType action)
   {
     case ActionType::Terminate:
       break;
+
+    case ActionType::Wait:
+      {
+        _waitStart = context.now;
+        _waitDuration = GetNext();
+      }
+      break;
+
     case ActionType::Color1:
       {
-        Serial.println("Color1");
         auto duration = GetNext();
         auto from = GetNext();
         auto to = GetNext();
@@ -97,7 +120,6 @@ void SetupAction(Context& context, ActionType action)
       break;
     case ActionType::Color2:
       {
-        Serial.println("Color2");
         auto duration = GetNext();
         auto from = GetNext();
         auto to = GetNext();
@@ -109,7 +131,6 @@ void SetupAction(Context& context, ActionType action)
       break;
     case ActionType::ColorTo1:
       {
-        Serial.println("ColorTo1");
         auto duration = GetNext();
         auto to = GetNext();
         dev0.Extrapolate(context, to, duration);
@@ -118,7 +139,6 @@ void SetupAction(Context& context, ActionType action)
       break;
     case ActionType::ColorTo2:
       {
-        Serial.println("ColorTo2");
         auto duration = GetNext();
         auto to = GetNext();
         dev0.Extrapolate(context, to, duration);
@@ -149,6 +169,9 @@ void Step(Context& context, ActionType action)
         }
       }
       break;
+    case ActionType::Wait:
+      actionFinished = context.now - _waitStart >= _waitDuration;
+      break;
     default:
       Serial.print("Unknown action in step "); Serial.println(action);
       delay(10000);
@@ -158,8 +181,6 @@ void Step(Context& context, ActionType action)
 void loop()
 {
   g_context.now = millis();
-
-  if (actionFinished) Serial.println("ACTION FINISHED");
 
   auto pushButtonChanged = pushButton.CheckState(g_context);
 
