@@ -41,7 +41,7 @@ const static uint32_t actionData[] = {
   COLOR_2(TIME, BLACK, BLUE, BLACK, GREEN),
   COLOR_2(TIME, BLACK, GREEN, BLACK, BLUE),
   ActionType::EndRepeat,
-  
+
   COLOR_1(1000, BLACK, BLACK),
   ActionType::Repeat, 4,
   COLOR_TO_2(TIME, RED, WHITE),
@@ -51,13 +51,6 @@ const static uint32_t actionData[] = {
   COLOR_TO_2(TIME, GREEN, WHITE),
   ActionType::EndRepeat,
 
-ActionType::Repeat, 5, 
-
-  COLOR_1(1000, BLACK, BLACK),
-  ActionType::Repeat, 10,
-  COLOR_2(10, WHITE, BLACK, WHITE, BLACK),
-  ActionType::EndRepeat,
-  
   COLOR_1(1000, BLACK, BLACK),
   ActionType::Repeat, 5,
   COLOR_2(20, WHITE, BLACK, WHITE, BLACK),
@@ -72,8 +65,6 @@ ActionType::Repeat, 5,
   ActionType::Repeat, 5,
   COLOR_2(100, WHITE, BLACK, WHITE, BLACK),
   ActionType::EndRepeat,
-
-ActionType::EndRepeat,
 
   COLOR_1(1000, BLACK, BLACK),
   COLOR_TO_2(500, WHITE, RED),
