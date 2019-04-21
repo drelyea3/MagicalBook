@@ -30,12 +30,45 @@ Button pushButton(ACTIVATE_BUTTON_PIN);
 Action* actions[] = {
   new ExtrapolateAction(BLACK, YELLOW, 1000),
 #if NO_INPUT
-  new WaitAction(2000), // because pushbutton died
+  new WaitAction(1000), // because pushbutton died
 #else
   new WaitForButton(&pushButton, true),
 #endif
-  new ExtrapolateAction(BLACK, RED, 1500),
-  new ExtrapolateAction(BLACK, GREEN, 1500),
+  new ExtrapolateAction(RED, BLACK, 1000),
+  new ExtrapolateAction(YELLOW, BLACK, 1000),
+  new ExtrapolateAction(BLUE, BLACK, 1000),
+  new ExtrapolateAction(RED, BLACK, 500),
+  new ExtrapolateAction(YELLOW, BLACK, 500),
+  new ExtrapolateAction(BLUE, BLACK, 500),
+  new ExtrapolateAction(RED, BLACK, 200),
+  new ExtrapolateAction(YELLOW, BLACK, 200),
+  new ExtrapolateAction(BLUE, BLACK, 200),
+  new ExtrapolateAction(RED, BLACK, 100),
+  new ExtrapolateAction(YELLOW, BLACK, 100),
+  new ExtrapolateAction(BLUE, BLACK, 100),
+  new ExtrapolateAction(RED, BLACK, 50),
+  new ExtrapolateAction(YELLOW, BLACK, 50),
+  new ExtrapolateAction(BLUE, BLACK, 50),
+  new ExtrapolateAction(RED, BLACK, 20),
+  new ExtrapolateAction(YELLOW, BLACK, 20),
+  new ExtrapolateAction(BLUE, BLACK, 20),
+  new ExtrapolateAction(WHITE, 20),
+  new ExtrapolateAction(BLACK, 20),
+  new ExtrapolateAction(WHITE, 20),
+  new ExtrapolateAction(BLACK, 20),
+  new ExtrapolateAction(WHITE, 20),
+  new ExtrapolateAction(BLACK, 20),
+  new ExtrapolateAction(WHITE, 20),
+  new ExtrapolateAction(BLACK, 20),
+  new ExtrapolateAction(WHITE, 20),
+  new ExtrapolateAction(BLACK, 20),
+  new ExtrapolateAction(WHITE, 20),
+  new ExtrapolateAction(BLACK, 20),
+  new ExtrapolateAction(WHITE, 20),
+  new ExtrapolateAction(BLACK, 20),
+  new ExtrapolateAction(YELLOW, BLACK, 1000),
+
+/*  new ExtrapolateAction(BLACK, GREEN, 1500),
   new ExtrapolateAction(BLACK, BLUE, 1500),
   new WaitAction(1000),
   new ExtrapolateAction(BLACK, WHITE, 500),
@@ -45,6 +78,7 @@ Action* actions[] = {
   new ExtrapolateAction(BLACK, WHITE, 50),
   new ExtrapolateAction(BLACK, WHITE, 1000),
   new WaitAction(100),
+  */
   new TerminateAction(),
 };
 
