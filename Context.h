@@ -4,7 +4,7 @@
 
 // NeoPixel definitions
 #define LED_PIN    6
-#define LED_COUNT 40
+#define LED_COUNT 48
 
 #include "color.h"
 

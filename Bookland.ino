@@ -10,6 +10,8 @@
 
 #define TRACE 1
 
+#define BRIGHTNESS 255
+
 #define ACTIVATE_BUTTON_PIN 4
 #define POWER_LED_PIN 5
 #define POWER_LED_BRIGHTNESS 8
@@ -22,8 +24,9 @@ Button pushButton(ACTIVATE_BUTTON_PIN);
 // The one and only global application context
 Context g_context;
 
-Device dev0(0, 20);
-Device dev1(20, 20);
+#define DEVICE_LED_COUNT (LED_COUNT / 2)
+Device dev0(0, DEVICE_LED_COUNT);
+Device dev1(DEVICE_LED_COUNT, DEVICE_LED_COUNT);
 
 #define WAIT(D) ActionType::Wait, D
 #define COLOR_1(D, FROM, TO) ActionType::Color1, D, FROM, TO
@@ -31,34 +34,54 @@ Device dev1(20, 20);
 #define COLOR_TO_1(D, TO) ActionType::ColorTo1, D, TO
 #define COLOR_TO_2(D, TO1, TO2) ActionType::ColorTo2, D, TO1, TO2
 
-const static uint32_t actionData[] = {
+#define TIME 500
 
-  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
-  COLOR_2(100, BLACK, GREEN, BLACK, BLUE),
-  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
-  COLOR_2(100, BLACK, GREEN, BLACK, BLUE),
-  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
-  COLOR_2(100, BLACK, GREEN, BLACK, BLUE),
-  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
-  COLOR_2(100, BLACK, GREEN, BLACK, BLUE),
-  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
-  COLOR_2(100, BLACK, GREEN, BLACK, BLUE),
-  COLOR_2(100, BLACK, BLUE, BLACK, GREEN),
-  COLOR_TO_2(100, GREEN, BLUE),
-  COLOR_TO_2(100, BLUE, GREEN),
-  COLOR_TO_2(100, GREEN, BLUE),
-  COLOR_TO_2(100, BLUE, GREEN),
-  COLOR_TO_2(100, GREEN, BLUE),
-  COLOR_TO_2(100, BLUE, GREEN),
-  COLOR_TO_2(100, GREEN, BLUE),
-  COLOR_TO_2(100, BLUE, GREEN),
-  COLOR_TO_2(100, GREEN, BLUE),
-  COLOR_TO_2(100, BLUE, GREEN),
-  COLOR_TO_2(100, GREEN, BLUE),
-  COLOR_TO_2(100, BLUE, GREEN),
-  COLOR_TO_2(100, GREEN, BLUE),
-  COLOR_TO_2(100, BLUE, GREEN),
-  COLOR_TO_1(2000, BLACK),
+const static uint32_t actionData[] = {
+  ActionType::Repeat, 4,
+  COLOR_2(TIME, BLACK, BLUE, BLACK, GREEN),
+  COLOR_2(TIME, BLACK, GREEN, BLACK, BLUE),
+  ActionType::EndRepeat,
+  
+  COLOR_1(1000, BLACK, BLACK),
+  ActionType::Repeat, 4,
+  COLOR_TO_2(TIME, RED, WHITE),
+  COLOR_TO_2(TIME, WHITE, BLUE),
+  COLOR_TO_2(TIME, BLUE, WHITE),
+  COLOR_TO_2(TIME, WHITE, GREEN),
+  COLOR_TO_2(TIME, GREEN, WHITE),
+  ActionType::EndRepeat,
+
+ActionType::Repeat, 5, 
+
+  COLOR_1(1000, BLACK, BLACK),
+  ActionType::Repeat, 10,
+  COLOR_2(10, WHITE, BLACK, WHITE, BLACK),
+  ActionType::EndRepeat,
+  
+  COLOR_1(1000, BLACK, BLACK),
+  ActionType::Repeat, 5,
+  COLOR_2(20, WHITE, BLACK, WHITE, BLACK),
+  ActionType::EndRepeat,
+
+  COLOR_1(1000, BLACK, BLACK),
+  ActionType::Repeat, 5,
+  COLOR_2(50, WHITE, BLACK, WHITE, BLACK),
+  ActionType::EndRepeat,
+
+  COLOR_1(1000, BLACK, BLACK),
+  ActionType::Repeat, 5,
+  COLOR_2(100, WHITE, BLACK, WHITE, BLACK),
+  ActionType::EndRepeat,
+
+ActionType::EndRepeat,
+
+  COLOR_1(1000, BLACK, BLACK),
+  COLOR_TO_2(500, WHITE, RED),
+  COLOR_TO_2(500, GREEN, BLUE),
+  COLOR_TO_2(500, RED, GREEN),
+  COLOR_TO_2(500, BLUE, RED),
+  COLOR_TO_2(500, YELLOW, YELLOW),
+  COLOR_TO_2(500, WHITE, WHITE),
   ActionType::Terminate
 };
 
@@ -78,7 +101,6 @@ ActionType GetNextAction()
 }
 
 bool actionFinished = true;
-byte brightness = 64;
 
 void setup() {
   Serial.begin(115200);
@@ -86,7 +108,7 @@ void setup() {
 
   pushButton.CheckState(g_context);
   g_context.strip.begin();
-  g_context.strip.setBrightness(brightness);
+  g_context.strip.setBrightness(BRIGHTNESS);
   dev0.SetColor(g_context, 0);
   dev1.SetColor(g_context, 0);
   g_context.strip.show();
@@ -95,13 +117,15 @@ void setup() {
 unsigned long _waitStart;
 uint32_t _waitDuration;
 
+#define MAX_REPEAT 4
+uint16_t repeatIndex = 0;
+uint16_t repeatCount[MAX_REPEAT];
+uint16_t repeatAction[MAX_REPEAT];
+
 void SetupAction(Context& context, ActionType action)
 {
   switch (action)
   {
-    case ActionType::Terminate:
-      break;
-
     case ActionType::Wait:
       {
         _waitStart = context.now;
@@ -146,6 +170,39 @@ void SetupAction(Context& context, ActionType action)
         dev1.Extrapolate(context, to, duration);
       }
       break;
+    case ActionType::Repeat:
+      {
+        auto count = GetNext();
+        if (repeatIndex < MAX_REPEAT)
+        {
+          repeatAction[repeatIndex] = __nextActionData__;
+          repeatCount[repeatIndex] = count;
+          ++repeatIndex;
+          actionFinished = true;
+        }
+      }
+      break;
+    case ActionType::EndRepeat:
+      {
+        int index = repeatIndex - 1;
+        if (index >= 0)
+        {
+          if (--repeatCount[index])
+          {
+            __nextActionData__ = repeatAction[index];
+          }
+          else
+          {
+            --repeatIndex;
+          }
+          actionFinished = true;
+        }
+      }
+      break;
+    case ActionType::Terminate:
+      dev0.SetColor(context, 0);
+      dev1.SetColor(context, 0);
+      break;
     default:
       Serial.print("Unknown action in SetupAction "); Serial.println(action);
       delay(10000);
@@ -186,10 +243,10 @@ void loop()
 
   if (actionFinished && currentAction != ActionType::Terminate)
   {
+    actionFinished = false;
     currentAction = GetNextAction();
     Serial.print("New action "); Serial.println(currentAction);
     SetupAction(g_context, currentAction);
-    actionFinished = false;
   }
 
   if (!actionFinished && currentAction != ActionType::Terminate)
