@@ -22,46 +22,51 @@ Button pushButton(ACTIVATE_BUTTON_PIN);
 // The one and only global application context
 Context g_context;
 
-Device matrix;
+Device dev0(0, 20);
+Device dev1(20, 20);
 
-auto goWhite = new DeviceExtrapolateAction(&matrix, BLACK, WHITE, 20);
-auto goBlack = new DeviceExtrapolateAction(&matrix, WHITE, BLACK, 20);
+#define COLOR_1(D, FROM, TO) ActionType::Color1, D, FROM, TO
+#define COLOR_2(D, FROM1, TO1, FROM2, TO2) ActionType::Color2, D, FROM1, TO1, FROM1, TO2
+#define COLOR_TO_1(D, TO) ActionType::ColorTo1, D, TO
+#define COLOR_TO_2(D, TO1, TO2) ActionType::ColorTo2, D, TO1, TO2
 
-Action* actions[] = {
-  new DeviceExtrapolateAction(&matrix, BLACK, YELLOW, 1000),
-  new WaitAction(1000), // because pushbutton died
-  new DeviceExtrapolateAction(&matrix, RED, BLACK, 1000),
-  new DeviceExtrapolateAction(&matrix, YELLOW, BLACK, 1000),
-  new DeviceExtrapolateAction(&matrix, BLUE, BLACK, 1000),
-  new DeviceExtrapolateAction(&matrix, RED, BLACK, 500),
-  new DeviceExtrapolateAction(&matrix, YELLOW, BLACK, 500),
-  new DeviceExtrapolateAction(&matrix, BLUE, BLACK, 500),
-  new DeviceExtrapolateAction(&matrix, RED, BLACK, 200),
-  new DeviceExtrapolateAction(&matrix, YELLOW, BLACK, 200),
-  new DeviceExtrapolateAction(&matrix, BLUE, BLACK, 200),
-  new DeviceExtrapolateAction(&matrix, RED, BLACK, 100),
-  new DeviceExtrapolateAction(&matrix, YELLOW, BLACK, 100),
-  new DeviceExtrapolateAction(&matrix, BLUE, BLACK, 100),
-  new DeviceExtrapolateAction(&matrix, RED, BLACK, 50),
-  new DeviceExtrapolateAction(&matrix, YELLOW, BLACK, 50),
-  new DeviceExtrapolateAction(&matrix, BLUE, BLACK, 50),
-  new DeviceExtrapolateAction(&matrix, RED, BLACK, 20),
-  new DeviceExtrapolateAction(&matrix, YELLOW, BLACK, 20),
-  new DeviceExtrapolateAction(&matrix, BLUE, BLACK, 20),
-  goWhite, goBlack,
-  goWhite, goBlack,
-  goWhite, goBlack,
-  goWhite, goBlack,
-  goWhite, goBlack,
-  new DeviceExtrapolateAction(&matrix, YELLOW, BLACK, 1000),
-  new TerminateAction(),
+const static uint32_t actionData[] = {
+  COLOR_1(1000, BLACK, COOL),
+  COLOR_TO_2(100, GREEN, BLUE),
+  COLOR_TO_2(100, BLUE, GREEN),
+  COLOR_TO_2(100, GREEN, BLUE),
+  COLOR_TO_2(100, BLUE, GREEN),
+  COLOR_TO_2(100, GREEN, BLUE),
+  COLOR_TO_2(100, BLUE, GREEN),
+  COLOR_TO_2(100, GREEN, BLUE),
+  COLOR_TO_2(100, BLUE, GREEN),
+  COLOR_TO_2(100, GREEN, BLUE),
+  COLOR_TO_2(100, BLUE, GREEN),
+  COLOR_TO_2(100, GREEN, BLUE),
+  COLOR_TO_2(100, BLUE, GREEN),
+  COLOR_TO_2(100, GREEN, BLUE),
+  COLOR_TO_2(100, BLUE, GREEN),
+  COLOR_TO_1(2000, BLACK),
+  ActionType::Terminate
 };
 
-int actionIndex = -1;
-bool actionFinished = false;
-Action* pAction;
-RGB color;
-byte brightness = 16;
+ActionType currentAction = ActionType::None;
+int __nextActionData__ = 0;
+
+uint32_t GetNext()
+{
+  auto value = actionData[__nextActionData__++];
+  //Serial.print("GetNext "); Serial.println(value, HEX);
+  return value;
+}
+
+ActionType GetNextAction()
+{
+  return (ActionType) GetNext();
+}
+
+bool actionFinished = true;
+byte brightness = 64;
 
 void setup() {
   Serial.begin(115200);
@@ -74,31 +79,101 @@ void setup() {
   g_context.strip.show();
 }
 
+void SetupAction(Context& context, ActionType action)
+{
+  switch (action)
+  {
+    case ActionType::Terminate:
+      break;
+    case ActionType::Color1:
+      {
+        Serial.println("Color1");
+        auto duration = GetNext();
+        auto from = GetNext();
+        auto to = GetNext();
+        dev0.Extrapolate(context, from, to, duration);
+        dev1.Extrapolate(context, from, to, duration);
+      }
+      break;
+    case ActionType::Color2:
+      {
+        Serial.println("Color2");
+        auto duration = GetNext();
+        auto from = GetNext();
+        auto to = GetNext();
+        dev0.Extrapolate(context, from, to, duration);
+        from = GetNext();
+        to = GetNext();
+        dev1.Extrapolate(context, from, to, duration);
+      }
+      break;
+    case ActionType::ColorTo1:
+      {
+        Serial.println("ColorTo1");
+        auto duration = GetNext();
+        auto to = GetNext();
+        dev0.Extrapolate(context, to, duration);
+        dev1.Extrapolate(context, to, duration);
+      }
+      break;
+    case ActionType::ColorTo2:
+      {
+        Serial.println("ColorTo2");
+        auto duration = GetNext();
+        auto to = GetNext();
+        dev0.Extrapolate(context, to, duration);
+        to = GetNext();
+        dev1.Extrapolate(context, to, duration);
+      }
+      break;
+    default:
+      Serial.print("Unknown action in SetupAction "); Serial.println(action);
+      delay(10000);
+  }
+}
+
+void Step(Context& context, ActionType action)
+{
+  switch (action)
+  {
+    case ActionType::Color1:
+    case ActionType::ColorTo1:
+    case ActionType::Color2:
+    case ActionType::ColorTo2:
+      {
+        auto more = dev0.Step(context);
+        dev1.Step(context);
+        if (!more)
+        {
+          actionFinished = true;
+        }
+      }
+      break;
+    default:
+      Serial.print("Unknown action in step "); Serial.println(action);
+      delay(10000);
+  }
+}
+
 void loop()
 {
   g_context.now = millis();
 
+  if (actionFinished) Serial.println("ACTION FINISHED");
+
   auto pushButtonChanged = pushButton.CheckState(g_context);
 
-  if (actionIndex == -1 || actionFinished)
+  if (actionFinished && currentAction != ActionType::Terminate)
   {
-    actionIndex = (actionIndex + 1) % (sizeof(actions) / sizeof(Action*));
-#if TRACE
-    Serial.print("Action "); Serial.println(actionIndex);
-#endif
-    pAction = actions[actionIndex];
+    currentAction = GetNextAction();
+    Serial.print("New action "); Serial.println(currentAction);
+    SetupAction(g_context, currentAction);
     actionFinished = false;
-    pAction->Setup(g_context);
   }
 
-  if (pAction)
+  if (!actionFinished && currentAction != ActionType::Terminate)
   {
-    actionFinished = !pAction->Step(g_context);
-  }
-
-  if (actionFinished)
-  {
-    pAction->Teardown(g_context);
+    Step(g_context, currentAction);
   }
 
   if (g_context.showNeeded)
