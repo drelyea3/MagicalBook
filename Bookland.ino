@@ -13,8 +13,6 @@
 #define BRIGHTNESS 255
 
 #define ACTIVATE_BUTTON_PIN 4
-#define POWER_LED_PIN 5
-#define POWER_LED_BRIGHTNESS 8
 
 #define BRIGHTNESS_PIN 3
 #define BRIGHTNESS_TOLERANCE 8
@@ -231,6 +229,10 @@ void loop()
   g_context.now = millis();
 
   auto pushButtonChanged = pushButton.CheckState(g_context);
+  if (pushButtonChanged)
+  {
+    Serial.print("---> button "); Serial.println(pushButton.GetValue());
+  }
 
   if (actionFinished && currentAction != ActionType::Terminate)
   {
