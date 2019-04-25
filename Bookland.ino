@@ -32,45 +32,34 @@ Device dev1(DEVICE_LED_COUNT, DEVICE_LED_COUNT);
 #define COLOR_TO_1(D, TO) ActionType::ColorTo1, D, TO
 #define COLOR_TO_2(D, TO1, TO2) ActionType::ColorTo2, D, TO1, TO2
 
-#define TIME 500
+#define TIME 100
 
 const static uint32_t actionData[] = {
+  COLOR_1(1000, BLACK, GOLD),
+  COLOR_1(TIME, BLACK, COOL),
+  WAIT(500),
+  
+  ActionType::Repeat, 2,
+  COLOR_TO_2(TIME*2, RED, BLUE),
+  COLOR_TO_2(TIME*2, GREEN, YELLOW),
+  ActionType::EndRepeat,
+
   ActionType::Repeat, 4,
-  COLOR_2(TIME, BLACK, BLUE, BLACK, GREEN),
-  COLOR_2(TIME, BLACK, GREEN, BLACK, BLUE),
+  COLOR_TO_2(TIME, RED, BLUE),
+  COLOR_TO_2(TIME, YELLOW, GREEN),
   ActionType::EndRepeat,
 
-  COLOR_1(1000, BLACK, BLACK),
-  ActionType::Repeat, 4,
-  COLOR_TO_2(TIME, RED, WHITE),
-  COLOR_TO_2(TIME, WHITE, BLUE),
-  COLOR_TO_2(TIME, BLUE, WHITE),
-  COLOR_TO_2(TIME, WHITE, GREEN),
-  COLOR_TO_2(TIME, GREEN, WHITE),
+  ActionType::Repeat, 8,
+  COLOR_TO_2(TIME/2, BLUE, RED),
+  COLOR_TO_2(TIME/2, GREEN, YELLOW),
   ActionType::EndRepeat,
 
-  COLOR_1(1000, BLACK, BLACK),
-  ActionType::Repeat, 5,
-  COLOR_2(20, WHITE, BLACK, WHITE, BLACK),
-  ActionType::EndRepeat,
+  COLOR_TO_1(100, BLACK),
+  WAIT(500),
+  COLOR_TO_1(1000, YELLOW),
+  COLOR_TO_1(1000, WHITE),
+  COLOR_TO_1(100, BLACK),
 
-  COLOR_1(1000, BLACK, BLACK),
-  ActionType::Repeat, 5,
-  COLOR_2(50, WHITE, BLACK, WHITE, BLACK),
-  ActionType::EndRepeat,
-
-  COLOR_1(1000, BLACK, BLACK),
-  ActionType::Repeat, 5,
-  COLOR_2(100, WHITE, BLACK, WHITE, BLACK),
-  ActionType::EndRepeat,
-
-  COLOR_1(1000, BLACK, BLACK),
-  COLOR_TO_2(500, WHITE, RED),
-  COLOR_TO_2(500, GREEN, BLUE),
-  COLOR_TO_2(500, RED, GREEN),
-  COLOR_TO_2(500, BLUE, RED),
-  COLOR_TO_2(500, YELLOW, YELLOW),
-  COLOR_TO_2(500, WHITE, WHITE),
   ActionType::Terminate
 };
 

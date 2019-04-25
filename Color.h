@@ -16,3 +16,4 @@ union RGB {
 #define WHITE   (uint32_t) 0xFFFFFF
 #define YELLOW  (uint32_t) 0xFFFF00
 #define COOL    (uint32_t) 0x3399ff
+#define GOLD    (uint32_t) 0xFFD700
