@@ -15,7 +15,6 @@ class Context
     bool showNeeded;
 
     unsigned long now;
-    RGB lastColor;
 
     void Fill(uint32_t color, uint32_t first = 0, uint32_t count = 0)
     {
