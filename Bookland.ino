@@ -81,12 +81,16 @@ ActionType GetNextAction()
 }
 
 bool actionFinished = true;
+int unpressedValue = 0;
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Starting");
 
   pushButton.CheckState(g_context);
+  unpressedValue = pushButton.GetUndebouncedValue();
+  Serial.print("Initial value "); Serial.println(unpressedValue);
+
   g_context.strip.begin();
   g_context.strip.setBrightness(BRIGHTNESS);
   dev0.SetColor(g_context, 0);
@@ -188,7 +192,7 @@ void SetupAction(Context& context, ActionType action)
       dev0.SetColor(context, 0);
       dev1.SetColor(context, 0);
       break;
-    case ActionType::Reset:      
+    case ActionType::Reset:
       break;
     default:
       Serial.print("Unknown action in SetupAction "); Serial.println(action);
@@ -217,7 +221,10 @@ void Step(Context& context, ActionType action)
       actionFinished = context.now - _waitStart >= _waitDuration;
       break;
     case ActionType::WaitButton:
-      actionFinished = pushButton.GetValue() == 1;
+      {
+        auto value = pushButton.GetValue();
+        actionFinished = value != -1 && value != unpressedValue;
+      }
       break;
     case ActionType::Reset:
       actionFinished = true;
