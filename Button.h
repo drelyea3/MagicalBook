@@ -23,7 +23,7 @@ class Button : public PinIO
     
     bool CheckStateCore(unsigned long now)
     {
-      bool currentRead = digitalRead(_pin) != 0;
+      bool currentRead = digitalRead(_pin) == 0;
 
       if (currentRead != _lastRead)
       {

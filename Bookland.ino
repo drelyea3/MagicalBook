@@ -31,17 +31,19 @@ Device dev1(DEVICE_LED_COUNT, DEVICE_LED_COUNT);
 #define COLOR_2(D, FROM1, TO1, FROM2, TO2) ActionType::Color2, D, FROM1, TO1, FROM1, TO2
 #define COLOR_TO_1(D, TO) ActionType::ColorTo1, D, TO
 #define COLOR_TO_2(D, TO1, TO2) ActionType::ColorTo2, D, TO1, TO2
+#define WAIT_BUTTON(PIN) ActionType::WaitButton, PIN
 
 #define TIME 100
 
 const static uint32_t actionData[] = {
+  WAIT_BUTTON(4),
   COLOR_1(1000, BLACK, GOLD),
   COLOR_1(TIME, BLACK, COOL),
   WAIT(500),
-  
+
   ActionType::Repeat, 2,
-  COLOR_TO_2(TIME*2, RED, BLUE),
-  COLOR_TO_2(TIME*2, GREEN, YELLOW),
+  COLOR_TO_2(TIME * 2, RED, BLUE),
+  COLOR_TO_2(TIME * 2, GREEN, YELLOW),
   ActionType::EndRepeat,
 
   ActionType::Repeat, 4,
@@ -50,8 +52,8 @@ const static uint32_t actionData[] = {
   ActionType::EndRepeat,
 
   ActionType::Repeat, 8,
-  COLOR_TO_2(TIME/2, BLUE, RED),
-  COLOR_TO_2(TIME/2, GREEN, YELLOW),
+  COLOR_TO_2(TIME / 2, BLUE, RED),
+  COLOR_TO_2(TIME / 2, GREEN, YELLOW),
   ActionType::EndRepeat,
 
   COLOR_TO_1(100, BLACK),
@@ -60,7 +62,7 @@ const static uint32_t actionData[] = {
   COLOR_TO_1(1000, WHITE),
   COLOR_TO_1(100, BLACK),
 
-  ActionType::Terminate
+  ActionType::Reset
 };
 
 ActionType currentAction = ActionType::None;
@@ -111,6 +113,11 @@ void SetupAction(Context& context, ActionType action)
       }
       break;
 
+    case ActionType::WaitButton:
+      {
+        auto pin = GetNext(); // one one button so ignore for now
+      }
+      break;
     case ActionType::Color1:
       {
         auto duration = GetNext();
@@ -181,6 +188,8 @@ void SetupAction(Context& context, ActionType action)
       dev0.SetColor(context, 0);
       dev1.SetColor(context, 0);
       break;
+    case ActionType::Reset:      
+      break;
     default:
       Serial.print("Unknown action in SetupAction "); Serial.println(action);
       delay(10000);
@@ -206,6 +215,13 @@ void Step(Context& context, ActionType action)
       break;
     case ActionType::Wait:
       actionFinished = context.now - _waitStart >= _waitDuration;
+      break;
+    case ActionType::WaitButton:
+      actionFinished = pushButton.GetValue() == 1;
+      break;
+    case ActionType::Reset:
+      actionFinished = true;
+      __nextActionData__ = 0;
       break;
     default:
       Serial.print("Unknown action in step "); Serial.println(action);
